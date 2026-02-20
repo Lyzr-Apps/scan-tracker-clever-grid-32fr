@@ -1,0 +1,29 @@
+{
+  "agents": {
+    "listing_monitor_manager": {
+      "agent_id": "69989a105d2326ad4d26cdce",
+      "type": "manager",
+      "provider": "openai",
+      "model": "gpt-4.1"
+    },
+    "web_scanner_agent": {
+      "agent_id": "699899ecfc075eb63c125e2f",
+      "type": "sub-agent",
+      "provider": "perplexity",
+      "model": "sonar-pro"
+    },
+    "notification_composer_agent": {
+      "agent_id": "699899fd5c09fa7c2b5b2e70",
+      "type": "sub-agent",
+      "provider": "openai",
+      "model": "gpt-4.1",
+      "tools": ["GMAIL_SEND_EMAIL"]
+    }
+  },
+  "schedule": {
+    "schedule_id": "69989a17399dfadeac37d150",
+    "agent_id": "69989a105d2326ad4d26cdce",
+    "cron_expression": "0 * * * *",
+    "timezone": "America/New_York"
+  }
+}

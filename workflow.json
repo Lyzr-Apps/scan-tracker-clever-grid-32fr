@@ -1,0 +1,20 @@
+{
+  "nodes": [
+    { "id": "input_node", "type": "Input", "label": "User Query", "nodeCategory": "input" },
+    { "id": "listing_monitor_manager", "type": "Agent", "label": "Listing Monitor Manager", "nodeCategory": "agent" },
+    { "id": "web_scanner_agent", "type": "Agent", "label": "Web Scanner Agent", "nodeCategory": "agent" },
+    { "id": "notification_composer_agent", "type": "Agent", "label": "Notification Composer Agent", "nodeCategory": "agent" },
+    { "id": "output_node", "type": "Output", "label": "Output", "nodeCategory": "end" }
+  ],
+  "edges": [
+    { "source": "input_node", "target": "listing_monitor_manager" },
+    { "source": "listing_monitor_manager", "target": "web_scanner_agent" },
+    { "source": "listing_monitor_manager", "target": "notification_composer_agent" },
+    { "source": "listing_monitor_manager", "target": "output_node" }
+  ],
+  "agents": {
+    "listing_monitor_manager": { "id": "69989a105d2326ad4d26cdce", "name": "Listing Monitor Manager", "type": "manager" },
+    "web_scanner_agent": { "id": "699899ecfc075eb63c125e2f", "name": "Web Scanner Agent", "type": "sub-agent" },
+    "notification_composer_agent": { "id": "699899fd5c09fa7c2b5b2e70", "name": "Notification Composer Agent", "type": "sub-agent" }
+  }
+}

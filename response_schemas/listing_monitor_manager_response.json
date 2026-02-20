@@ -1,0 +1,54 @@
+{
+  "agent_name": "Listing Monitor Manager",
+  "agent_id": "69989a105d2326ad4d26cdce",
+  "description": "Coordinates the scanning and notification workflow \u2014 routes user filter criteria to the web scanner, receives structured listing results, and delegates email composition and delivery to the notification agent.",
+  "agent_type": "json",
+  "accessor": "result",
+  "auto_generated": true,
+  "response_schema": {
+    "scan_status": "string",
+    "total_listings_found": "number",
+    "job_listings_count": "number",
+    "apartment_listings_count": "number",
+    "email_sent": "boolean",
+    "email_recipient": "string",
+    "scan_timestamp": "string",
+    "listings": [
+      {
+        "title": "string",
+        "company": "string",
+        "location": "string",
+        "source_url": "string",
+        "source_name": "string",
+        "date_posted": "string",
+        "listing_type": "string",
+        "snippet": "string",
+        "relevance_score": "number"
+      }
+    ],
+    "summary_message": "string"
+  },
+  "example_response": {
+    "scan_status": "sample string",
+    "total_listings_found": 0,
+    "job_listings_count": 0,
+    "apartment_listings_count": 0,
+    "email_sent": false,
+    "email_recipient": "sample string",
+    "scan_timestamp": "sample string",
+    "listings": [
+      {
+        "title": "sample string",
+        "company": "sample string",
+        "location": "sample string",
+        "source_url": "sample string",
+        "source_name": "sample string",
+        "date_posted": "sample string",
+        "listing_type": "sample string",
+        "snippet": "sample string",
+        "relevance_score": 0
+      }
+    ],
+    "summary_message": "sample string"
+  }
+}
