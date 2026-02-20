@@ -1,10 +1,13 @@
 'use client'
 
-import React, { useState, useEffect, useCallback } from 'react'
-import { callAIAgent, AIAgentResponse } from '@/lib/aiAgent'
-import { listSchedules, getScheduleLogs, pauseSchedule, resumeSchedule, cronToHuman, Schedule, ExecutionLog } from '@/lib/scheduler'
+import React, { useState, useEffect, useCallback, ReactNode } from 'react'
+import { callAIAgent } from '@/lib/aiAgent'
+import type { AIAgentResponse } from '@/lib/aiAgent'
+import { listSchedules, getScheduleLogs, pauseSchedule, resumeSchedule, cronToHuman } from '@/lib/scheduler'
+import type { Schedule, ExecutionLog } from '@/lib/scheduler'
 import { HiOutlineSearch, HiOutlineClock, HiOutlineMail, HiOutlineCog, HiOutlineChevronDown, HiOutlineChevronUp, HiOutlineExternalLink, HiOutlineRefresh, HiOutlineX, HiOutlinePlus, HiOutlineCheck, HiOutlineBriefcase, HiOutlineHome, HiOutlineCollection, HiOutlineFilter, HiOutlineCalendar, HiOutlinePause, HiOutlinePlay } from 'react-icons/hi'
-import { FiRadar, FiActivity } from 'react-icons/fi'
+import { FiActivity } from 'react-icons/fi'
+import { MdOutlineRadar } from 'react-icons/md'
 
 // ─── Constants ────────────────────────────────────────────────────────────────
 
@@ -93,10 +96,19 @@ const SAMPLE_SCAN_RESULT: ScanResult = {
 
 function parseAgentResult(result: AIAgentResponse): ScanResult | null {
   if (!result.success) return null
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   let data = result?.response?.result as any
   if (!data) return null
   if (typeof data === 'string') {
-    try { data = JSON.parse(data) } catch { return null }
+    try {
+      data = JSON.parse(data)
+    } catch (_e) {
+      return null
+    }
+  }
+  // Ensure listings is always an array
+  if (data && !Array.isArray(data.listings)) {
+    data.listings = []
   }
   return data as ScanResult
 }
@@ -104,16 +116,20 @@ function parseAgentResult(result: AIAgentResponse): ScanResult | null {
 function formatTimestamp(ts: string | undefined | null): string {
   if (!ts) return '--'
   try {
-    return new Date(ts).toLocaleString()
-  } catch {
-    return ts
+    const d = new Date(ts)
+    if (isNaN(d.getTime())) return String(ts)
+    return d.toLocaleString()
+  } catch (_e) {
+    return String(ts)
   }
 }
 
 function timeAgo(ts: string | undefined | null): string {
   if (!ts) return '--'
   try {
-    const diff = Date.now() - new Date(ts).getTime()
+    const d = new Date(ts)
+    if (isNaN(d.getTime())) return String(ts)
+    const diff = Date.now() - d.getTime()
     const mins = Math.floor(diff / 60000)
     if (mins < 1) return 'just now'
     if (mins < 60) return `${mins}m ago`
@@ -121,12 +137,18 @@ function timeAgo(ts: string | undefined | null): string {
     if (hours < 24) return `${hours}h ago`
     const days = Math.floor(hours / 24)
     return `${days}d ago`
-  } catch {
-    return ts
+  } catch (_e) {
+    return String(ts)
   }
 }
 
-function renderMarkdown(text: string) {
+function formatInline(text: string): ReactNode {
+  const parts = text.split(/\*\*(.*?)\*\*/g)
+  if (parts.length === 1) return <>{text}</>
+  return <>{parts.map((part, i) => i % 2 === 1 ? <strong key={i} className="font-semibold">{part}</strong> : <React.Fragment key={i}>{part}</React.Fragment>)}</>
+}
+
+function renderMarkdown(text: string): ReactNode {
   if (!text) return null
   return (
     <div className="space-y-1">
@@ -143,15 +165,9 @@ function renderMarkdown(text: string) {
   )
 }
 
-function formatInline(text: string) {
-  const parts = text.split(/\*\*(.*?)\*\*/g)
-  if (parts.length === 1) return text
-  return parts.map((part, i) => i % 2 === 1 ? <strong key={i} className="font-semibold">{part}</strong> : part)
-}
+// ─── Page Error Wrapper ──────────────────────────────────────────────────────
 
-// ─── ErrorBoundary ────────────────────────────────────────────────────────────
-
-class ErrorBoundary extends React.Component<
+class PageErrorBoundary extends React.Component<
   { children: React.ReactNode },
   { hasError: boolean; error: string }
 > {
@@ -298,14 +314,14 @@ export default function Page() {
       if (savedSettings) setSettings(JSON.parse(savedSettings))
       const savedHistory = localStorage.getItem('listingRadar_history')
       if (savedHistory) setScanHistory(JSON.parse(savedHistory))
-    } catch { /* ignore */ }
+    } catch (_e) { /* ignore */ }
     setHydrated(true)
   }, [])
 
   // ── Persist to localStorage ──────────────────────────────────────
   useEffect(() => {
     if (!hydrated) return
-    try { localStorage.setItem('listingRadar_history', JSON.stringify(scanHistory)) } catch { /* ignore */ }
+    try { localStorage.setItem('listingRadar_history', JSON.stringify(scanHistory)) } catch (_e) { /* ignore */ }
   }, [scanHistory, hydrated])
 
   // ── Load schedule info ──────────────────────────────────────────
@@ -322,7 +338,7 @@ export default function Page() {
       if (logsResult.success && Array.isArray(logsResult.executions)) {
         setScheduleLogs(logsResult.executions)
       }
-    } catch { /* ignore */ }
+    } catch (_e) { /* ignore */ }
     setScheduleLoading(false)
   }, [])
 
@@ -361,7 +377,7 @@ export default function Page() {
       } else {
         setInlineMsg({ type: 'error', text: result?.error || 'Scan returned no data. Please try again.' })
       }
-    } catch {
+    } catch (_e) {
       setInlineMsg({ type: 'error', text: 'Scan failed. Please check your settings and try again.' })
     }
     setScanning(false)
@@ -379,7 +395,7 @@ export default function Page() {
         await resumeSchedule(schedule.id)
       }
       await loadScheduleData()
-    } catch { /* ignore */ }
+    } catch (_e) { /* ignore */ }
     setScheduleLoading(false)
   }
 
@@ -388,7 +404,7 @@ export default function Page() {
     try {
       localStorage.setItem('listingRadar_settings', JSON.stringify(settings))
       setSettingsMsg({ type: 'success', text: 'Settings saved successfully.' })
-    } catch {
+    } catch (_e) {
       setSettingsMsg({ type: 'error', text: 'Failed to save settings.' })
     }
     setTimeout(() => setSettingsMsg(null), 3000)
@@ -419,12 +435,12 @@ export default function Page() {
 
   // ── Render ───────────────────────────────────────────────────────
   return (
-    <ErrorBoundary>
+    <PageErrorBoundary>
       <div className="min-h-screen bg-background text-foreground font-sans flex flex-col" style={{ lineHeight: '1.3' }}>
         {/* ── Header ──────────────────────────────────────────────── */}
         <header className="bg-card border-b border-border px-4 py-2.5 flex items-center justify-between flex-shrink-0">
           <div className="flex items-center gap-2">
-            <FiRadar className="w-5 h-5 text-primary" />
+            <MdOutlineRadar className="w-5 h-5 text-primary" />
             <h1 className="text-base font-semibold tracking-tight">ListingRadar</h1>
           </div>
           <div className="flex items-center gap-3">
@@ -963,6 +979,6 @@ export default function Page() {
           </main>
         </div>
       </div>
-    </ErrorBoundary>
+    </PageErrorBoundary>
   )
 }
